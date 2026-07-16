@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>StandBy Clock V2.1</title>
+    <title>StandBy Clock V3</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -29,17 +29,16 @@
             overflow: hidden;
         }
 
-        /* Chia đôi màn hình 50% - 50% */
         .container {
             display: flex;
             width: 100%;
             height: 100%;
-            padding: 12px;
-            gap: 12px;
+            padding: 10px;
+            gap: 10px;
+            transition: all 0.3s ease;
         }
 
         .panel {
-            flex: 1;
             background-color: #0d0d0d;
             border-radius: 28px;
             border: 1px solid #222;
@@ -49,43 +48,71 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 20px;
+            padding: 12px 16px;
         }
 
-        /* --- BÊN TRÁI: ĐỒNG HỒ SỐ SIÊU TO --- */
+        /* KHUNG ĐỒNG HỒ */
+        .clock-panel {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        /* Chế độ Full Màn Hình */
+        .container.full-mode .slideshow-panel {
+            display: none;
+        }
+
         .status-bar {
             width: 100%;
             display: flex;
             justify-content: space-between;
-            font-size: 0.95rem;
+            align-items: center;
+            font-size: 0.9rem;
             color: #888888;
             font-weight: 600;
+            z-index: 5;
         }
 
-        /* Tăng cỡ chữ lên tối đa cho 1/2 màn hình ngang */
+        /* Nút Chuyển đổi Chế độ (Full / Split) */
+        .toggle-btn {
+            background: #222;
+            color: #ccc;
+            border: 1px solid #444;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        /* Số giờ Siêu To */
         .time-display {
-            font-size: 16vw; 
+            font-size: 22vw; 
             font-weight: 900;
             letter-spacing: -2px;
             color: #ffffff;
-            line-height: 0.9;
+            line-height: 0.85;
             margin: auto 0;
+            text-align: center;
         }
 
         .date-badge {
             background-color: #222222;
             padding: 6px 18px;
             border-radius: 14px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: #e0e0e0;
         }
 
-        /* --- BÊN PHẢI: SLIDESHOW PHOTOS --- */
-        .slideshow-container {
+        /* KHUNG SLIDESHOW */
+        .slideshow-panel {
+            flex: 1;
+            height: 100%;
             padding: 0;
             justify-content: center;
-            cursor: pointer;
+            position: relative;
         }
 
         .slide-img {
@@ -103,21 +130,22 @@
             display: block;
         }
 
-        /* Nút chọn ảnh: Tự động ẩn khi đã có ảnh */
+        /* Nút chọn ảnh đặt xuống góc dưới cùng bên phải để KHÔNG CHE BẢNG CHỌN ẢNH */
         .photo-picker-btn {
             position: absolute;
+            bottom: 12px;
+            right: 12px;
             z-index: 10;
-            background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(12px);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 12px 22px;
-            border-radius: 24px;
-            font-size: 1rem;
+            padding: 8px 14px;
+            border-radius: 16px;
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             transition: opacity 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
         .photo-picker-btn.hidden {
@@ -129,7 +157,6 @@
             display: none;
         }
 
-        /* Video ẩn hỗ trợ chống sleep màn hình */
         #wake-video {
             position: absolute;
             width: 1px;
@@ -145,10 +172,10 @@
         <source src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAAdtZGF0AAAAAA==" type="video/mp4">
     </video>
 
-    <div class="container">
-        <div class="panel">
+    <div class="container" id="main-container">
+        <div class="panel clock-panel">
             <div class="status-bar">
-                <span>⏰ 07:30 AM</span>
+                <button class="toggle-btn" id="toggle-mode-btn" onclick="toggleDisplayMode()">🔲 Chế độ: 1/2</button>
                 <span id="battery">🔋 --%</span>
             </div>
 
@@ -157,9 +184,9 @@
             <div class="date-badge" id="date">Đang tải...</div>
         </div>
 
-        <div class="panel slideshow-container" id="slideshow-panel">
+        <div class="panel slideshow-panel" id="slideshow-panel">
             <button class="photo-picker-btn" id="upload-btn" onclick="document.getElementById('file-input').click()">
-                🖼️ Chọn ảnh từ Photos
+                🖼️ Chọn ảnh
             </button>
             <input type="file" id="file-input" multiple accept="image/*">
 
@@ -173,7 +200,7 @@
             navigator.serviceWorker.register('sw.js');
         }
 
-        // --- HỆ THỐNG GIỮ MÀN HÌNH LUÔN SÁNG ---
+        // --- GIỮ MÀN HÌNH LUÔN SÁNG ---
         let wakeLock = null;
         async function requestWakeLock() {
             try {
@@ -217,7 +244,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // --- SLIDESHOW & XỬ LÝ ẨN/HIỆN NÚT ---
+        // --- SLIDESHOW (30 GIÂY ĐỔI 1 LẦN) ---
         let currentSlideIndex = 0;
         let slideInterval = null;
         const uploadBtn = document.getElementById('upload-btn');
@@ -229,14 +256,14 @@
 
             if (slideInterval) clearInterval(slideInterval);
 
+            // Đổi ảnh mỗi 30000ms (30 giây)
             slideInterval = setInterval(() => {
                 images[currentSlideIndex].classList.remove('active');
                 currentSlideIndex = (currentSlideIndex + 1) % images.length;
                 images[currentSlideIndex].classList.add('active');
-            }, 5000);
+            }, 30000); 
         }
 
-        // Chọn ảnh mới
         document.getElementById('file-input').addEventListener('change', function(event) {
             const files = event.target.files;
             if (files.length === 0) return;
@@ -254,11 +281,9 @@
             currentSlideIndex = 0;
             startSlideshow();
 
-            // Ẩn nút sau khi đã chọn ảnh xong
             uploadBtn.classList.add('hidden');
         });
 
-        // Bấm vào khung ảnh bên phải để Ẩn / Hiện nút Chọn ảnh
         slideshowPanel.addEventListener('click', function(e) {
             if (e.target !== uploadBtn) {
                 uploadBtn.classList.toggle('hidden');
@@ -266,6 +291,20 @@
         });
 
         startSlideshow();
+
+        // --- CHUYỂN ĐỔI CHẾ ĐỘ FULL / SPLIT ---
+        function toggleDisplayMode() {
+            const container = document.getElementById('main-container');
+            const btn = document.getElementById('toggle-mode-btn');
+
+            if (container.classList.contains('full-mode')) {
+                container.classList.remove('full-mode');
+                btn.innerText = '🔲 Chế độ: 1/2';
+            } else {
+                container.classList.add('full-mode');
+                btn.innerText = '🖥️ Chế độ: Full';
+            }
+        }
     </script>
 </body>
 </html>
