@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>StandBy Clock</title>
+    <title>StandBy Clock V2</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -20,57 +20,106 @@
         }
 
         body {
-            background-color: #0f0f0f;
+            background-color: #000000;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             height: 100vh;
+            width: 100vw;
             display: flex;
-            justify-content: center;
-            align-items: center;
             overflow: hidden;
         }
 
-        .clock-card {
-            background-color: #000000;
-            width: 90vw;
-            height: 80vh;
-            border-radius: 32px;
-            border: 2px solid #222;
-            padding: 24px;
+        /* Bố cục chia đôi màn hình 50% - 50% */
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        .panel {
+            flex: 1;
+            background-color: #0f0f0f;
+            border-radius: 28px;
+            border: 1px solid #222;
+            overflow: hidden;
+            position: relative;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            padding: 24px;
         }
 
+        /* --- BÊN TRÁI: ĐỒNG HỒ --- */
         .status-bar {
             width: 100%;
             display: flex;
             justify-content: space-between;
-            font-size: 1rem;
-            color: #a0a0a0;
+            font-size: 0.9rem;
+            color: #888888;
             font-weight: 500;
         }
 
         .time-display {
-            font-size: 22vw;
+            font-size: 11vw;
             font-weight: 800;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             color: #ffffff;
             line-height: 1;
         }
 
         .date-badge {
             background-color: #222222;
-            padding: 8px 20px;
-            border-radius: 16px;
-            font-size: 1rem;
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
             font-weight: 600;
             color: #e0e0e0;
         }
-        
-        /* Video ẩn giúp giữ màn hình luôn sáng */
+
+        /* --- BÊN PHẢI: SLIDESHOW PHOTOS --- */
+        .slideshow-container {
+            padding: 0; /* Tràn viền panel phải */
+            justify-content: center;
+        }
+
+        .slide-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 28px;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .slide-img.active {
+            display: block;
+        }
+
+        /* Nút chọn ảnh từ thư viện */
+        .photo-picker-btn {
+            position: absolute;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Video ẩn giữ màn hình không tự tắt */
         #wake-video {
             position: absolute;
             width: 1px;
@@ -86,15 +135,27 @@
         <source src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAAdtZGF0AAAAAA==" type="video/mp4">
     </video>
 
-    <div class="clock-card">
-        <div class="status-bar">
-            <span>⏰ 07:30 AM</span>
-            <span id="battery">🔋 --%</span>
+    <div class="container">
+        <div class="panel">
+            <div class="status-bar">
+                <span>⏰ 07:30 AM</span>
+                <span id="battery">🔋 --%</span>
+            </div>
+
+            <div class="time-display" id="time">00:00</div>
+
+            <div class="date-badge" id="date">Đang tải...</div>
         </div>
 
-        <div class="time-display" id="time">00:00</div>
+        <div class="panel slideshow-container" id="slideshow-panel">
+            <button class="photo-picker-btn" id="upload-btn" onclick="document.getElementById('file-input').click()">
+                🖼️ Chọn ảnh từ Photos
+            </button>
+            <input type="file" id="file-input" multiple accept="image/*">
 
-        <div class="date-badge" id="date">Đang tải...</div>
+            <img class="slide-img active default-img" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" alt="Default 1">
+            <img class="slide-img default-img" src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80" alt="Default 2">
+        </div>
     </div>
 
     <script>
@@ -102,38 +163,24 @@
             navigator.serviceWorker.register('sw.js');
         }
 
-        // --- CƠ CHẾ 1: WAKE LOCK API ---
+        // --- HỆ THỐNG GIỮ MÀN HÌNH LUÔN SÁNG ---
         let wakeLock = null;
-
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
                 }
-            } catch (err) {
-                console.log('Wake Lock Error:', err);
-            }
+            } catch (err) {}
         }
 
-        // --- CƠ CHẾ 2: INVISIBLE VIDEO TRICK ---
         const video = document.getElementById('wake-video');
-
         function activateKeepAwake() {
             requestWakeLock();
-            if (video) {
-                video.play().catch(() => {});
-            }
+            if (video) video.play().catch(() => {});
         }
 
-        // Kích hoạt ngay khi người dùng CHẠM VÀO MÀN HÌNH
         document.addEventListener('click', activateKeepAwake);
         document.addEventListener('touchstart', activateKeepAwake);
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                activateKeepAwake();
-            }
-        });
 
         // --- ĐỒNG HỒ & PIN ---
         function updateClock() {
@@ -159,6 +206,51 @@
 
         setInterval(updateClock, 1000);
         updateClock();
+
+        // --- TÍNH NĂNG SLIDESHOW ẢNH ---
+        let currentSlideIndex = 0;
+        let slideInterval = null;
+
+        function startSlideshow() {
+            const images = document.querySelectorAll('.slide-img');
+            if (images.length === 0) return;
+
+            if (slideInterval) clearInterval(slideInterval);
+
+            slideInterval = setInterval(() => {
+                images[currentSlideIndex].classList.remove('active');
+                currentSlideIndex = (currentSlideIndex + 1) % images.length;
+                images[currentSlideIndex].classList.add('active');
+            }, 5000); // Tự động đổi ảnh mỗi 5 giây
+        }
+
+        // Xử lý khi người dùng tải ảnh từ máy
+        document.getElementById('file-input').addEventListener('change', function(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            const panel = document.getElementById('slideshow-panel');
+            
+            // Xóa ảnh cũ
+            document.querySelectorAll('.slide-img').forEach(img => img.remove());
+
+            // Thêm các ảnh mới được chọn
+            Array.from(files).forEach((file, index) => {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.classList.add('slide-img');
+                if (index === 0) img.classList.add('active');
+                panel.appendChild(img);
+            });
+
+            currentSlideIndex = 0;
+            startSlideshow();
+
+            // Ẩn nút chọn ảnh sau khi đã chọn xong (chạm vào màn hình để hiển thị lại nếu muốn)
+            document.getElementById('upload-btn').style.opacity = '0.3';
+        });
+
+        startSlideshow();
     </script>
 </body>
 </html>
