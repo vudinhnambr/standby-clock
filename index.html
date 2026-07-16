@@ -69,9 +69,22 @@
             font-weight: 600;
             color: #e0e0e0;
         }
+        
+        /* Video ẩn giúp giữ màn hình luôn sáng */
+        #wake-video {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0.01;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
+
+    <video id="wake-video" loop playsinline muted>
+        <source src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAAdtZGF0AAAAAA==" type="video/mp4">
+    </video>
 
     <div class="clock-card">
         <div class="status-bar">
@@ -85,12 +98,11 @@
     </div>
 
     <script>
-        // Đăng ký Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
 
-        // --- TÍNH NĂNG GIỮ MÀN HÌNH LUÔN SÁNG (WAKE LOCK) ---
+        // --- CƠ CHẾ 1: WAKE LOCK API ---
         let wakeLock = null;
 
         async function requestWakeLock() {
@@ -99,17 +111,27 @@
                     wakeLock = await navigator.wakeLock.request('screen');
                 }
             } catch (err) {
-                console.log('Không thể giữ màn hình sáng:', err);
+                console.log('Wake Lock Error:', err);
             }
         }
 
-        // Tự động yêu cầu giữ màn hình sáng khi bật app
-        requestWakeLock();
+        // --- CƠ CHẾ 2: INVISIBLE VIDEO TRICK ---
+        const video = document.getElementById('wake-video');
 
-        // Nếu chuyển tab hoặc ẩn app rồi bật lại, kích hoạt lại Wake Lock
-        document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-                await requestWakeLock();
+        function activateKeepAwake() {
+            requestWakeLock();
+            if (video) {
+                video.play().catch(() => {});
+            }
+        }
+
+        // Kích hoạt ngay khi người dùng CHẠM VÀO MÀN HÌNH
+        document.addEventListener('click', activateKeepAwake);
+        document.addEventListener('touchstart', activateKeepAwake);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                activateKeepAwake();
             }
         });
 
