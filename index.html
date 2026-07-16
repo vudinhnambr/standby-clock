@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>StandBy Clock</title>
     
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f0f0f">
 
@@ -29,7 +30,6 @@
             overflow: hidden;
         }
 
-        /* Khung đồng hồ StandBy */
         .clock-card {
             background-color: #000000;
             width: 90vw;
@@ -44,7 +44,6 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
         }
 
-        /* Thanh trạng thái trên cùng */
         .status-bar {
             width: 100%;
             display: flex;
@@ -54,7 +53,6 @@
             font-weight: 500;
         }
 
-        /* Đồng hồ hiển thị chính */
         .time-display {
             font-size: 22vw;
             font-weight: 800;
@@ -63,7 +61,6 @@
             line-height: 1;
         }
 
-        /* Khung ngày tháng bên dưới */
         .date-badge {
             background-color: #222222;
             padding: 8px 20px;
@@ -79,7 +76,7 @@
     <div class="clock-card">
         <div class="status-bar">
             <span>⏰ 07:30 AM</span>
-            <span id="battery">🔋 100%</span>
+            <span id="battery">🔋 --%</span>
         </div>
 
         <div class="time-display" id="time">00:00</div>
@@ -88,20 +85,21 @@
     </div>
 
     <script>
+        // Đăng ký Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
         function updateClock() {
             const now = new Date();
-            
-            // Định dạng giờ (HH:mm)
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             document.getElementById('time').innerText = `${hours}:${minutes}`;
 
-            // Định dạng ngày tháng
             const options = { weekday: 'long', day: '2-digit', month: 'short' };
             document.getElementById('date').innerText = now.toLocaleDateString('vi-VN', options);
         }
 
-        // Lấy dung lượng pin nếu trình duyệt hỗ trợ
         if ('getBattery' in navigator) {
             navigator.getBattery().then(battery => {
                 function updateBattery() {
@@ -113,7 +111,6 @@
             });
         }
 
-        // Cập nhật thời gian mỗi giây
         setInterval(updateClock, 1000);
         updateClock();
     </script>
