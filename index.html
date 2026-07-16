@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>StandBy Clock V3</title>
+    <title>StandBy Clock V3.1</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -75,7 +75,7 @@
             z-index: 5;
         }
 
-        /* Nút Chuyển đổi Chế độ (Full / Split) */
+        /* Nút Chuyển đổi Chế độ */
         .toggle-btn {
             background: #222;
             color: #ccc;
@@ -86,15 +86,21 @@
             cursor: pointer;
         }
 
-        /* Số giờ Siêu To */
+        /* KHẮC PHỤC LỖI TRÀN SỐ: Dùng clamp & vh/vw chuẩn cho 1/2 màn hình */
         .time-display {
-            font-size: 22vw; 
+            font-size: clamp(4rem, 14vw, 12vh);
             font-weight: 900;
-            letter-spacing: -2px;
+            letter-spacing: -1px;
             color: #ffffff;
-            line-height: 0.85;
+            line-height: 1;
             margin: auto 0;
             text-align: center;
+            white-space: nowrap;
+        }
+
+        /* Số cỡ cực đại khi ở chế độ Full screen */
+        .container.full-mode .time-display {
+            font-size: clamp(6rem, 25vw, 22vh);
         }
 
         .date-badge {
@@ -130,19 +136,19 @@
             display: block;
         }
 
-        /* Nút chọn ảnh đặt xuống góc dưới cùng bên phải để KHÔNG CHE BẢNG CHỌN ẢNH */
+        /* KHẮC PHỤC BỊ CHE: Nút chọn ảnh chuyển lên mép TRÊN CÙNG BÊN PHẢI */
         .photo-picker-btn {
             position: absolute;
-            bottom: 12px;
+            top: 12px;
             right: 12px;
-            z-index: 10;
-            background: rgba(0, 0, 0, 0.75);
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(8px);
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 8px 14px;
-            border-radius: 16px;
-            font-size: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
             font-weight: 600;
             cursor: pointer;
             transition: opacity 0.3s ease;
@@ -186,7 +192,7 @@
 
         <div class="panel slideshow-panel" id="slideshow-panel">
             <button class="photo-picker-btn" id="upload-btn" onclick="document.getElementById('file-input').click()">
-                🖼️ Chọn ảnh
+                📷 Chọn ảnh
             </button>
             <input type="file" id="file-input" multiple accept="image/*">
 
@@ -244,7 +250,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // --- SLIDESHOW (30 GIÂY ĐỔI 1 LẦN) ---
+        // --- SLIDESHOW (30 GIÂY) ---
         let currentSlideIndex = 0;
         let slideInterval = null;
         const uploadBtn = document.getElementById('upload-btn');
@@ -256,7 +262,6 @@
 
             if (slideInterval) clearInterval(slideInterval);
 
-            // Đổi ảnh mỗi 30000ms (30 giây)
             slideInterval = setInterval(() => {
                 images[currentSlideIndex].classList.remove('active');
                 currentSlideIndex = (currentSlideIndex + 1) % images.length;
