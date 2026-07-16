@@ -1,0 +1,16 @@
+{
+  "name": "StandBy Clock",
+  "short_name": "StandBy",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2838/2838779.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
