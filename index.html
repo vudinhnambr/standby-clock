@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>StandBy Clock V4.1</title>
+    <title>StandBy Clock V4.2</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -36,13 +36,13 @@
             padding: 8px;
             gap: 8px;
             transition: all 0.3s ease;
-            flex-direction: row; /* Mặc định xoay ngang: 2 bên */
+            flex-direction: row;
         }
 
-        /* TỰ ĐỘNG THÍCH ỨNG KHN XOAY DỌC MÀN HÌNH */
+        /* TỰ ĐỘNG XOAY THEO HƯỚNG MÀN HÌNH */
         @media (orientation: portrait) {
             .container {
-                flex-direction: column; /* Xoay dọc: Trên - Dưới */
+                flex-direction: column;
             }
         }
 
@@ -59,7 +59,6 @@
             padding: 10px 12px;
         }
 
-        /* KHUNG ĐỒNG HỒ */
         .clock-panel {
             flex: 1;
             width: 100%;
@@ -92,7 +91,6 @@
             cursor: pointer;
         }
 
-        /* KHUNG CHỨA SỐ GIỜ TRÀN VIỀN */
         .time-wrapper {
             flex: 1;
             width: 100%;
@@ -115,7 +113,7 @@
 
         @media (orientation: portrait) {
             .time-display {
-                font-size: 20vw;
+                font-size: 18vw;
             }
         }
 
@@ -132,7 +130,6 @@
             color: #e0e0e0;
         }
 
-        /* KHUNG SLIDESHOW */
         .slideshow-panel {
             flex: 1;
             width: 100%;
@@ -157,7 +154,6 @@
             display: block;
         }
 
-        /* NÚT CHỌN ẢNH NỔI DẠNG THU GỌN */
         .picker-box {
             position: absolute;
             top: 10px;
@@ -229,7 +225,7 @@
             </div>
 
             <input type="file" id="file-input-photos" multiple accept="image/*">
-            <input type="file" id="file-input-files" multiple accept="image/*">
+            <input type="file" id="file-input-files" multiple accept="*/*">
 
             <img class="slide-img active default-img" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" alt="Default 1">
             <img class="slide-img default-img" src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80" alt="Default 2">
@@ -336,11 +332,14 @@
             document.querySelectorAll('.slide-img').forEach(img => img.remove());
 
             Array.from(files).forEach((file, index) => {
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                img.classList.add('slide-img');
-                if (index === 0) img.classList.add('active');
-                slideshowPanel.appendChild(img);
+                // Chỉ nhận các tệp là hình ảnh
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.classList.add('slide-img');
+                    if (index === 0) img.classList.add('active');
+                    slideshowPanel.appendChild(img);
+                }
             });
 
             currentSlideIndex = 0;
