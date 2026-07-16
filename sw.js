@@ -1,11 +1,17 @@
-self.addEventListener('install', (e) => {
+const CACHE_NAME = 'standby-clock-v1';
+
+self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (e) => {
-  return self.clients.claim();
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(fetch(e.request));
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
 });
