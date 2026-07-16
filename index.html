@@ -90,6 +90,30 @@
             navigator.serviceWorker.register('sw.js');
         }
 
+        // --- TÍNH NĂNG GIỮ MÀN HÌNH LUÔN SÁNG (WAKE LOCK) ---
+        let wakeLock = null;
+
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.log('Không thể giữ màn hình sáng:', err);
+            }
+        }
+
+        // Tự động yêu cầu giữ màn hình sáng khi bật app
+        requestWakeLock();
+
+        // Nếu chuyển tab hoặc ẩn app rồi bật lại, kích hoạt lại Wake Lock
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
+
+        // --- ĐỒNG HỒ & PIN ---
         function updateClock() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
